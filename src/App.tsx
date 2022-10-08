@@ -18,28 +18,36 @@ type Pedido = {
   nome: string;
   endereco: string;
   dataPedido: string;
-  compras: string;
+  compras: Produto[];
   total: number;
   entrega: string;
   statusPedido: string;
+};
+
+type Produto = {
+  nome: string;
+  preco: number;
 };
 
 export default function App() {
   const status = [
     { key: 'a', text: 'Em andamento', value: 'andamento' },
     { key: 'e', text: 'Em aguardo', value: 'aguardo' },
+    { key: 'p', text: 'Problema no pagamento', value: 'problema ao pagar' },
     { key: 'f', text: 'Finalizado', value: 'finalizado' },
   ];
   const [nome, setNome] = useState('');
+  const [nomeProduto, setNomeProduto] = useState('');
   const [end, setEnd] = useState('');
   const [statusEscolhido, setStatusEscolhido] = useState(status[0].value);
   const [data, setData] = useState('');
   const [preco, setPreco] = useState(0);
+  const [total, setTotal] = useState(0);
   const [radio, setRadio] = useState('Domicílio');
-  const [itens, setItens] = useState('');
   const [selectPedido, setSelectPedido] = useState<Pedido>();
   const [open, setOpen] = useState(false);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
 
   useEffect(() => {
     const isPedido = localStorage.getItem('pedidos');
@@ -63,26 +71,52 @@ export default function App() {
     [pedidos, setPedidos],
   );
 
+  const handleAdd = useCallback(() => {
+    if (nomeProduto.length === 0 || preco <= 0) {
+      toast.error('Adicione produto e preço válido');
+      return;
+    }
+    const lista = [...produtos, { nome: nomeProduto, preco: preco }];
+    setProdutos(lista);
+    setTotal(lista.reduce(getTotal, 0));
+    setNomeProduto('');
+    setPreco(0);
+  }, [
+    nomeProduto,
+    preco,
+    produtos,
+    setProdutos,
+    setNomeProduto,
+    setPreco,
+    setTotal,
+  ]);
+
+  const getTotal = (total: number, item: Produto) => {
+    return total + item.preco;
+  };
+
   const handleSubmit = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+
       const obj = {
         nome: nome,
         endereco: end,
         dataPedido: data,
-        total: preco,
-        compras: itens,
+        total: total,
+        compras: produtos,
         entrega: radio,
         statusPedido: statusEscolhido,
       };
+
       const lista = [...pedidos, obj];
       localStorage.setItem('pedidos', JSON.stringify(lista));
       setPedidos(lista);
       setNome('');
       setEnd('');
-      setItens('');
+      setProdutos([]);
       setPreco(0);
-
+      setTotal(0);
       toast.success('Cadastrado com sucesso!');
     },
     [
@@ -92,12 +126,14 @@ export default function App() {
       preco,
       radio,
       statusEscolhido,
-      itens,
+      produtos,
+      total,
       pedidos,
       setPedidos,
       setNome,
       setEnd,
-      setItens,
+      setTotal,
+      setProdutos,
       setPreco,
     ],
   );
@@ -112,12 +148,21 @@ export default function App() {
         <Modal.Header>Pedido de {selectPedido?.nome}</Modal.Header>
         <Modal.Content>
           <Modal.Description>
-            <Header>Cliente {selectPedido?.nome}</Header>
-            <p>
-              Compras: <br /> {selectPedido?.compras}
-            </p>
-            <p>Status do pedido: {selectPedido?.statusPedido}</p>
+            <Header>Cliente: {selectPedido?.nome}</Header>
+            <p>Endereço de entrega: {selectPedido?.endereco}</p>
+            Compras:
+            <ul>
+              {selectPedido?.compras.map((itens) => {
+                return (
+                  <li key={itens.nome}>
+                    {itens.nome}
+                    Preço: R$ {itens.preco}
+                  </li>
+                );
+              })}
+            </ul>
             <p>Data do pedido: {selectPedido?.dataPedido}</p>
+            <p>Status do pagamento do pedido: {selectPedido?.statusPedido}</p>
             <p>Tipo da entrega: {selectPedido?.entrega}</p>
             <p>Total: R$ {selectPedido?.total.toFixed(2)}</p>
           </Modal.Description>
@@ -151,12 +196,7 @@ export default function App() {
         </Container>
       </Menu>
 
-      <Grid
-        columns={2}
-        relaxed="very"
-        stackable
-        style={{ padding: '10px', height: '100vh' }}
-      >
+      <Grid columns={2} relaxed="very" stackable style={{ padding: '10px' }}>
         <Grid.Column>
           <Header size="huge">Cadastro de Pedidos</Header>
           <Form onSubmit={(e) => handleSubmit(e)}>
@@ -170,7 +210,7 @@ export default function App() {
               />
             </Form.Field>
             <Form.Field required>
-              <label>Endereço</label>
+              <label>Endereço de entrega</label>
               <input
                 placeholder="Endereço"
                 value={end}
@@ -180,10 +220,10 @@ export default function App() {
             </Form.Field>
             <Form.Select
               fluid
-              label="Status do Pedido"
+              label="Status do Pagamento"
               options={status}
               onChange={(e, data) => setStatusEscolhido(data.value as string)}
-              placeholder="Status do pedido"
+              placeholder="Status do pagamento"
             />
             <Form.Field>
               <label>Data do pedido</label>
@@ -212,23 +252,42 @@ export default function App() {
               />
             </Form.Group>
 
-            <Form.TextArea
-              label="Itens"
-              placeholder="Digite os itens, quantidade e o preço..."
-              style={{ resize: 'none' }}
-              value={itens}
-              onChange={(e) => setItens(e.target.value)}
-              required
-            />
-            <Form.Field>
-              <label>Preço Total</label>
-              <input
-                placeholder="Preço"
-                type="number"
-                value={preco}
-                onChange={(e) => setPreco(Number(e.target.value))}
-              />
-            </Form.Field>
+            <Form.Group widths={'equal'}>
+              <Form.Field required>
+                <label>Produto</label>
+                <input
+                  placeholder="Nome do Produto"
+                  value={nomeProduto}
+                  onChange={(e) => setNomeProduto(e.target.value)}
+                />
+              </Form.Field>
+              <Form.Field required>
+                <label>Preço</label>
+                <input
+                  placeholder="Preço do Produto"
+                  value={preco}
+                  type="number"
+                  onChange={(e) => setPreco(Number(e.target.value))}
+                />
+              </Form.Field>
+              <Button type="button" onClick={handleAdd}>
+                Adicionar na lista
+              </Button>
+            </Form.Group>
+
+            <List divided verticalAlign="middle">
+              {produtos.map((item) => {
+                return (
+                  <List.Item key={item.nome}>
+                    <List.Content>Nome: {item.nome}</List.Content>
+                    <List.Content>
+                      Preço: R$ {item.preco.toFixed(2)}
+                    </List.Content>
+                  </List.Item>
+                );
+              })}
+            </List>
+            <Header>Total: R$ {total.toFixed(2)}</Header>
             <Button type="submit">Cadastrar</Button>
           </Form>
         </Grid.Column>
