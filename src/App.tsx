@@ -139,7 +139,7 @@ export default function App() {
   );
 
   return (
-    <Container style={{ width: '100%' }}>
+    <div className="App">
       <Modal
         onClose={() => setOpen(false)}
         onOpen={() => setOpen(true)}
@@ -155,8 +155,7 @@ export default function App() {
               {selectPedido?.compras.map((itens) => {
                 return (
                   <li key={itens.nome}>
-                    {itens.nome}
-                    Preço: R$ {itens.preco}
+                    Nome: {itens.nome} || preço: R$ {itens.preco}
                   </li>
                 );
               })}
@@ -332,6 +331,6 @@ export default function App() {
         </Container>
       </Segment>
       <ToastContainer theme="colored" autoClose={3000} />
-    </Container>
+    </div>
   );
 }
