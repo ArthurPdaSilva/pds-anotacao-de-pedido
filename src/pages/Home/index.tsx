@@ -140,6 +140,7 @@ export default function Home() {
           <Modal.Description>
             <Header>Cliente: {selectPedido?.cliente.nome}</Header>
             <p>Endereço de entrega: {selectPedido?.cliente.endereco}</p>
+            <p>Telefone: {selectPedido?.cliente.telefone}</p>
             Compras:
             <ul>
               {selectPedido?.compras.map((itens) => {
