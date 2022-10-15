@@ -10,6 +10,21 @@ export default function Customers() {
   const [end, setEnd] = useState('');
   const [tel, setTel] = useState('');
 
+  const handleFormat = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const notFormatted = e.target.value;
+
+      const formattedPhone = notFormatted
+        .replace(/\D/g, '')
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{5})(\d)/, '$1-$2')
+        .replace(/(-\d{4})\d+?$/, '$1');
+
+      setTel(formattedPhone);
+    },
+    [setTel],
+  );
+
   const handleSubmitCustomer = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -41,7 +56,7 @@ export default function Customers() {
       <HeaderApp />
       <Grid
         textAlign="center"
-        style={{ height: '100vh', width: '100vw' }}
+        style={{ height: '100vh', width: '100%' }}
         verticalAlign="middle"
       >
         <Grid.Column style={{ maxWidth: 500 }}>
@@ -72,7 +87,7 @@ export default function Customers() {
                 <input
                   placeholder="Telefone"
                   value={tel}
-                  onChange={(e) => setTel(e.target.value)}
+                  onChange={(e) => handleFormat(e)}
                   required
                 />
               </Form.Field>
