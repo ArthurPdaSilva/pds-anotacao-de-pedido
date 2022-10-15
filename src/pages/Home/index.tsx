@@ -10,10 +10,11 @@ import status from '../../types/Opcao';
 
 export default function Home() {
   const [nomeProduto, setNomeProduto] = useState('');
+  const [preco, setPreco] = useState(0);
+  const [quantidade, setQuantidade] = useState(1);
   const [clienteEscolhido, setClienteEscolhido] = useState('');
   const [statusEscolhido, setStatusEscolhido] = useState(status[0].value);
   const [data, setData] = useState('');
-  const [preco, setPreco] = useState(0);
   const [total, setTotal] = useState(0);
   const [radio, setRadio] = useState('Domicílio');
   const [open, setOpen] = useState(false);
@@ -42,15 +43,6 @@ export default function Home() {
     [setSelectPedido],
   );
 
-  const handleDelete = useCallback(
-    (i: string) => {
-      const lista = pedidos.filter((item) => item.cliente.nome !== i);
-      localStorage.setItem('pedidos', JSON.stringify(lista));
-      setPedidos(lista);
-    },
-    [pedidos, setPedidos],
-  );
-
   const getCliente = useCallback(
     (nome: string) => {
       const c = clientes.filter((item) => item.nome === nome);
@@ -59,12 +51,28 @@ export default function Home() {
     [clientes],
   );
 
+  const getTotal = (total: number, item: Produto) => {
+    return total + item.preco * item.quantidade;
+  };
+
+  const handleDelete = useCallback(
+    (i: string) => {
+      const lista = pedidos.filter((item) => item.cliente.nome !== i);
+      setPedidos(lista);
+      localStorage.setItem('pedidos', JSON.stringify(lista));
+    },
+    [pedidos, setPedidos],
+  );
+
   const handleAdd = useCallback(() => {
     if (nomeProduto.length === 0 || preco <= 0) {
       toast.error('Adicione produto e preço válido');
       return;
     }
-    const lista = [...produtos, { nome: nomeProduto, preco: preco }];
+    const lista = [
+      ...produtos,
+      { nome: nomeProduto, preco: preco, quantidade: quantidade },
+    ];
     setProdutos(lista);
     setTotal(lista.reduce(getTotal, 0));
     setNomeProduto('');
@@ -78,10 +86,6 @@ export default function Home() {
     setPreco,
     setTotal,
   ]);
-
-  const getTotal = (total: number, item: Produto) => {
-    return total + item.preco;
-  };
 
   const insertClient = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -146,7 +150,8 @@ export default function Home() {
               {selectPedido?.compras.map((itens) => {
                 return (
                   <li key={itens.nome}>
-                    Nome: {itens.nome} || preço: R$ {itens.preco}
+                    Nome: {itens.nome} || preço: R$ {itens.preco.toFixed(2)} ||
+                    Quantidade: {itens.quantidade}
                   </li>
                 );
               })}
@@ -254,6 +259,15 @@ export default function Home() {
                     onChange={(e) => setPreco(Number(e.target.value))}
                   />
                 </Form.Field>
+                <Form.Field required>
+                  <label>Quantidade</label>
+                  <input
+                    placeholder="Quantidade do Produto"
+                    value={quantidade}
+                    type="number"
+                    onChange={(e) => setQuantidade(Number(e.target.value))}
+                  />
+                </Form.Field>
                 <Button type="button" color="teal" onClick={handleAdd}>
                   Adicionar na lista
                 </Button>
@@ -265,7 +279,10 @@ export default function Home() {
                     <List.Item key={item.nome}>
                       <List.Content>Nome: {item.nome}</List.Content>
                       <List.Content>
-                        Preço: R$ {item.preco.toFixed(2)}
+                        Preço Unitário: R$ {item.preco.toFixed(2)}
+                      </List.Content>
+                      <List.Content>
+                        Quantidade: {item.quantidade.toFixed(2)}
                       </List.Content>
                     </List.Item>
                   );
