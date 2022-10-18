@@ -2,6 +2,7 @@ import Cliente from './Cliente';
 import Produto from './Produto';
 
 type Pedido = {
+  id: string;
   cliente: Cliente;
   dataPedido: string;
   compras: Produto[];

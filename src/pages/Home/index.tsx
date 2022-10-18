@@ -1,12 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
+
+// Components
 import HeaderApp from '../../Components/Header';
 import FooterApp from '../../Components/Footer';
-import { toast } from 'react-toastify';
-import { Header, Button, Form, Grid, List, Modal } from 'semantic-ui-react';
+
+// Types
 import Pedido from '../../types/Pedido';
 import Produto from '../../types/Produto';
 import Cliente from '../../types/Cliente';
 import status from '../../types/Opcao';
+
+import { v4 as uuidv4 } from 'uuid';
+import { Header, Button, Form, Grid, List, Modal } from 'semantic-ui-react';
+import { toast } from 'react-toastify';
 
 export default function Home() {
   const [nomeProduto, setNomeProduto] = useState('');
@@ -56,8 +62,8 @@ export default function Home() {
   };
 
   const handleDelete = useCallback(
-    (i: string) => {
-      const lista = pedidos.filter((item) => item.cliente.nome !== i);
+    (id: string) => {
+      const lista = pedidos.filter((item) => item.id !== id);
       setPedidos(lista);
       localStorage.setItem('pedidos', JSON.stringify(lista));
     },
@@ -77,13 +83,16 @@ export default function Home() {
     setTotal(lista.reduce(getTotal, 0));
     setNomeProduto('');
     setPreco(0);
+    setQuantidade(1);
   }, [
     nomeProduto,
     preco,
     produtos,
+    quantidade,
     setProdutos,
     setNomeProduto,
     setPreco,
+    setQuantidade,
     setTotal,
   ]);
 
@@ -99,6 +108,7 @@ export default function Home() {
       const clienteEncontrado = getCliente(clienteEscolhido);
       e.preventDefault();
       const obj: Pedido = {
+        id: uuidv4(),
         cliente: clienteEncontrado,
         dataPedido: data,
         total: total,
@@ -112,6 +122,7 @@ export default function Home() {
       localStorage.setItem('pedidos', JSON.stringify(lista));
       setPedidos(lista);
       setProdutos([]);
+      setQuantidade(1);
       setPreco(0);
       setTotal(0);
       toast.success('Cadastrado com sucesso!');
@@ -119,7 +130,6 @@ export default function Home() {
     [
       clienteEscolhido,
       data,
-      preco,
       radio,
       statusEscolhido,
       produtos,
@@ -128,6 +138,7 @@ export default function Home() {
       setPedidos,
       setTotal,
       setProdutos,
+      setQuantidade,
       setPreco,
     ],
   );
@@ -306,10 +317,7 @@ export default function Home() {
                     <Button color="green" onClick={() => handleModal(item)}>
                       VER
                     </Button>
-                    <Button
-                      color="red"
-                      onClick={() => handleDelete(item.cliente.nome)}
-                    >
+                    <Button color="red" onClick={() => handleDelete(item.id)}>
                       X
                     </Button>
                   </List.Content>
